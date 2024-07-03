@@ -35,6 +35,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.3405.executor": "Run",
     "Python.D:/Design Thinking3/game.py.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
@@ -57,8 +58,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-1d06a55b98c1-91d5c284f522-JavaScript-PY-241.15989.155" />
-        <option value="bundled-python-sdk-babbdf50b680-7c6932dee5e4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-241.15989.155" />
+        <option value="bundled-python-sdk-babbdf50b680-746f403e7f0c-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.15989.155" />
       </set>
     </attachedChunks>
   </component>
@@ -106,13 +106,6 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="background page&#10;created by kwokchunYik" />
     <option name="LAST_COMMIT_MESSAGE" value="background page&#10;created by kwokchunYik" />
-  </component>
-  <component name="XDebuggerManager">
-    <watches-manager>
-      <inline-watch fileUrl="file://$PROJECT_DIR$/game.py" line="0">
-        <watch expression="__exception__" language="Python" />
-      </inline-watch>
-    </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/main_py$D__Design_Thinking3_game_py.coverage" NAME="$PROJECT_DIR$/game.py Coverage Results" MODIFIED="1718172131826" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

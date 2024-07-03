@@ -2,8 +2,10 @@ import pygame
 import random
 import sys
 
-WIDTH = 480
+WIDTH = 640  # 增加总宽度来容纳分数板
 HEIGHT = 600
+GAME_WIDTH = 480  # 游戏内容的宽度
+SCOREBOARD_WIDTH = WIDTH - GAME_WIDTH  # 分数板的宽度
 FPS = 60
 
 # Colors
@@ -43,6 +45,15 @@ def draw_text(surface, text, size, x, y, color):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
+def draw_scoreboard(surface, score, health, enemies_killed):
+    surface.fill(BLACK)
+    x = SCOREBOARD_WIDTH / 2
+    y = 50
+    draw_text(surface, f'HiScore: {score}', 18, x, y, WHITE)
+    draw_text(surface, f'Score: {score}', 18, x, y + 30, WHITE)
+    draw_text(surface, f'Player: {"★" * health}', 18, x, y + 60, RED)
+    draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 90, GREEN)
+
 def main_menu(screen):
     screen.fill(WHITE)
     draw_text(screen, "Knight's Adventure", 48, WIDTH / 2, HEIGHT / 4, BLACK)
@@ -68,7 +79,7 @@ def game_over_screen(screen):
 
 def single_player_game(screen):
     background = pygame.image.load("grassland.png").convert()
-    background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+    background = pygame.transform.scale(background, (GAME_WIDTH, HEIGHT))
 
     class Player(pygame.sprite.Sprite):
         def __init__(self):
@@ -76,7 +87,7 @@ def single_player_game(screen):
             self.image = pygame.image.load("knight.png").convert_alpha()
             self.image = pygame.transform.scale(self.image, (60, 50))
             self.rect = self.image.get_rect()
-            self.rect.centerx = WIDTH / 2
+            self.rect.centerx = GAME_WIDTH / 2
             self.rect.bottom = HEIGHT - 10
             self.speedx = 0
             self.speedy = 0
@@ -99,8 +110,8 @@ def single_player_game(screen):
             self.rect.x += self.speedx
             self.rect.y += self.speedy
 
-            if self.rect.right > WIDTH:
-                self.rect.right = WIDTH
+            if self.rect.right > GAME_WIDTH:
+                self.rect.right = GAME_WIDTH
             if self.rect.left < 0:
                 self.rect.left = 0
             if self.rect.bottom > HEIGHT:
@@ -120,7 +131,7 @@ def single_player_game(screen):
             self.image = pygame.image.load("Monster.png").convert_alpha()
             self.image = pygame.transform.scale(self.image, (30, 40))
             self.rect = self.image.get_rect()
-            self.rect.x = random.randrange(WIDTH - self.rect.width)
+            self.rect.x = random.randrange(GAME_WIDTH - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
             self.speedy = random.randrange(1, 8)
             self.speedx = random.randrange(-3, 3)
@@ -128,8 +139,8 @@ def single_player_game(screen):
         def update(self):
             self.rect.x += self.speedx
             self.rect.y += self.speedy
-            if self.rect.top > HEIGHT + 10 or self.rect.left < -25 or self.rect.right > WIDTH + 20:
-                self.rect.x = random.randrange(WIDTH - self.rect.width)
+            if self.rect.top > HEIGHT + 10 or self.rect.left < -25 or self.rect.right > GAME_WIDTH + 20:
+                self.rect.x = random.randrange(GAME_WIDTH - self.rect.width)
                 self.rect.y = random.randrange(-100, -40)
                 self.speedy = random.randrange(1, 8)
             if random.random() > 0.98:
@@ -140,8 +151,6 @@ def single_player_game(screen):
             all_sprites.add(bullet)
             enemy_bullets.add(bullet)
             shoot_sound.play()
-
-
 
     class Bullet(pygame.sprite.Sprite):
         def __init__(self, x, y, speed, bullet_type):
@@ -178,6 +187,8 @@ def single_player_game(screen):
     score = 0
     enemies_killed = 0
 
+    scoreboard_surface = pygame.Surface((SCOREBOARD_WIDTH, HEIGHT))
+
     running = True
     while running:
         clock.tick(FPS)
@@ -209,9 +220,8 @@ def single_player_game(screen):
 
         screen.blit(background, (0, 0))
         all_sprites.draw(screen)
-        draw_text(screen, f'Health: {player.health}', 18, WIDTH / 2, 10, BLACK)
-        draw_text(screen, f'Score: {score}', 18, WIDTH - 70, 10, BLACK)
-        draw_text(screen, f'Enemies Killed: {enemies_killed}', 18, 70, 10, BLACK)
+        draw_scoreboard(scoreboard_surface, score, player.health, enemies_killed)
+        screen.blit(scoreboard_surface, (GAME_WIDTH, 0))
         pygame.display.flip()
 
     game_over_screen(screen)
@@ -249,6 +259,7 @@ while True:
 
     pygame.display.update()
     clock.tick(FPS)
+
 
 
 
