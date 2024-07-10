@@ -34,6 +34,15 @@ pygame.mixer.music.play(-1)  # Loop background music indefinitely
 shoot_sound = pygame.mixer.Sound('shoot.mp3')
 player_hit_sound = pygame.mixer.Sound('death.mp3')
 player_death_sound = pygame.mixer.Sound('death.mp3')
+explosion_sound = pygame.mixer.Sound('death.mp3')
+
+# Load explosion image
+explosion_image = pygame.image.load('explosion.png').convert_alpha()
+explosion_image = pygame.transform.scale(explosion_image, (30, 40))
+
+# Load red star image
+red_star_image = pygame.image.load('red_star.png').convert_alpha()
+red_star_image = pygame.transform.scale(red_star_image, (20, 20))
 
 # Font for drawing text
 font_name = pygame.font.match_font('arial')
@@ -51,7 +60,9 @@ def draw_scoreboard(surface, score, health, enemies_killed):
     y = 50
     draw_text(surface, f'HiScore: {score}', 18, x, y, WHITE)
     draw_text(surface, f'Score: {score}', 18, x, y + 30, WHITE)
-    draw_text(surface, f'Player: {"★" * health}', 18, x, y + 60, RED)
+    draw_text(surface, f'Player:', 18, x - 20, y + 60, RED)
+    for i in range(health):
+        surface.blit(red_star_image, (x + i * 25, y + 60))
     draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 90, GREEN)
 
 def main_menu(screen):
@@ -159,7 +170,6 @@ def single_player_game(screen):
                 self.image = pygame.image.load('player bullets.png').convert_alpha()
             else:  # bullet_type == "enemy"
                 self.image = pygame.image.load('enemy bullets.png').convert_alpha()
-                # self.image = pygame.transform.rotate(self.image, 180)  # 移除旋转操作
             self.image = pygame.transform.scale(self.image, (20, 40))  # 调整图片大小以适应子弹
             self.rect = self.image.get_rect()
             self.rect.bottom = y
@@ -171,6 +181,29 @@ def single_player_game(screen):
             self.rect.y += self.speedy
             if self.rect.bottom < 0 or self.rect.top > HEIGHT:
                 self.kill()
+
+    class Explosion(pygame.sprite.Sprite):
+        def __init__(self, center):
+            pygame.sprite.Sprite.__init__(self)
+            self.image = explosion_image
+            self.rect = self.image.get_rect()
+            self.rect.center = center
+            self.frame = 0
+            self.last_update = pygame.time.get_ticks()
+            self.frame_rate = 50  # 控制动画速度
+
+        def update(self):
+            now = pygame.time.get_ticks()
+            if now - self.last_update > self.frame_rate:
+                self.last_update = now
+                self.frame += 1
+                if self.frame == 9:
+                    self.kill()
+                else:
+                    center = self.rect.center
+                    self.image = explosion_image
+                    self.rect = self.image.get_rect()
+                    self.rect.center = center
 
     all_sprites = pygame.sprite.Group()
     player_bullets = pygame.sprite.Group()
@@ -205,6 +238,9 @@ def single_player_game(screen):
         for hit in hits:
             score += 10
             enemies_killed += 1
+            explosion = Explosion(hit.rect.center)
+            all_sprites.add(explosion)
+            explosion_sound.play()
             enemy = Enemy()
             all_sprites.add(enemy)
             enemies.add(enemy)
