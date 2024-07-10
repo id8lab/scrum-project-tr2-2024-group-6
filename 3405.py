@@ -159,7 +159,7 @@ def single_player_game(screen):
                 self.image = pygame.image.load('player bullets.png').convert_alpha()
             else:  # bullet_type == "enemy"
                 self.image = pygame.image.load('enemy bullets.png').convert_alpha()
-                self.image = pygame.transform.rotate(self.image, 180)
+                # self.image = pygame.transform.rotate(self.image, 180)  # 移除旋转操作
             self.image = pygame.transform.scale(self.image, (20, 40))  # 调整图片大小以适应子弹
             self.rect = self.image.get_rect()
             self.rect.bottom = y
@@ -259,7 +259,6 @@ while True:
 
     pygame.display.update()
     clock.tick(FPS)
-
 
 
 
