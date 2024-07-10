@@ -40,6 +40,10 @@ explosion_sound = pygame.mixer.Sound('death.mp3')
 explosion_image = pygame.image.load('explosion.png').convert_alpha()
 explosion_image = pygame.transform.scale(explosion_image, (30, 40))
 
+# Load red star image
+red_star_image = pygame.image.load('red_star.png').convert_alpha()
+red_star_image = pygame.transform.scale(red_star_image, (20, 20))
+
 # Font for drawing text
 font_name = pygame.font.match_font('arial')
 
@@ -56,7 +60,9 @@ def draw_scoreboard(surface, score, health, enemies_killed):
     y = 50
     draw_text(surface, f'HiScore: {score}', 18, x, y, WHITE)
     draw_text(surface, f'Score: {score}', 18, x, y + 30, WHITE)
-    draw_text(surface, f'Player: {"★" * health}', 18, x, y + 60, RED)
+    draw_text(surface, f'Player:', 18, x - 20, y + 60, RED)
+    for i in range(health):
+        surface.blit(red_star_image, (x + i * 25, y + 60))
     draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 90, GREEN)
 
 def main_menu(screen):
