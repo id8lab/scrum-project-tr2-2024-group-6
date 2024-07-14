@@ -40,9 +40,11 @@ explosion_sound = pygame.mixer.Sound('death.mp3')
 explosion_image = pygame.image.load('explosion.png').convert_alpha()
 explosion_image = pygame.transform.scale(explosion_image, (30, 40))
 
-# Load red star image
+# Load red and green star images
 red_star_image = pygame.image.load('red_star.png').convert_alpha()
 red_star_image = pygame.transform.scale(red_star_image, (20, 20))
+green_star_image = pygame.image.load('green_star.png').convert_alpha()
+green_star_image = pygame.transform.scale(green_star_image, (20, 20))
 
 # Font for drawing text
 font_name = pygame.font.match_font('arial')
@@ -54,7 +56,7 @@ def draw_text(surface, text, size, x, y, color):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
-def draw_scoreboard(surface, score, health, enemies_killed, kill_streak):
+def draw_scoreboard(surface, score, health, enemies_killed, bombs):
     surface.fill(BLACK)
     x = SCOREBOARD_WIDTH / 2
     y = 50
@@ -63,8 +65,10 @@ def draw_scoreboard(surface, score, health, enemies_killed, kill_streak):
     draw_text(surface, f'Player:', 18, x - 20, y + 60, RED)
     for i in range(health):
         surface.blit(red_star_image, (x + i * 25, y + 60))
-    draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 90, GREEN)
-    draw_text(surface, f'Kill Streak: {kill_streak}', 18, x, y + 120, BLUE)
+    draw_text(surface, f'Bomb:', 18, x - 20, y + 90, GREEN)
+    for i in range(bombs):
+        surface.blit(green_star_image, (x + i * 25, y + 90))
+    draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 120, GREEN)
 
 def main_menu(screen):
     screen.fill(WHITE)
@@ -104,7 +108,8 @@ def single_player_game(screen):
             self.speedx = 0
             self.speedy = 0
             self.health = 3
-            self.kill_streak = 0  # Add kill streak attribute
+            self.bombs = 3
+            self.enemies_killed = 0
 
         def update(self):
             self.speedx = 0
@@ -137,6 +142,23 @@ def single_player_game(screen):
             all_sprites.add(bullet)
             player_bullets.add(bullet)
             shoot_sound.play()
+
+        def use_bomb(self, enemies, enemy_bullets):
+            if self.bombs > 0:
+                self.bombs -= 1
+                for enemy in enemies:
+                    explosion = Explosion(enemy.rect.center)
+                    all_sprites.add(explosion)
+                    explosion_sound.play()
+                    enemy.kill()
+                    global score
+                    score += 10
+                    self.enemies_killed += 1
+                    enemy = Enemy()
+                    all_sprites.add(enemy)
+                    enemies.add(enemy)
+                for bullet in enemy_bullets:
+                    bullet.kill()
 
     class Enemy(pygame.sprite.Sprite):
         def __init__(self):
@@ -207,24 +229,6 @@ def single_player_game(screen):
                     self.rect = self.image.get_rect()
                     self.rect.center = center
 
-    class KillStreak(pygame.sprite.Sprite):
-        def __init__(self, x, y, kill_streak):
-            pygame.sprite.Sprite.__init__(self)
-            self.kill_streak = kill_streak
-            self.image = pygame.Surface((50, 20))
-            self.image.set_colorkey(BLACK)  # Make the background of the text transparent
-            draw_text(self.image, str(kill_streak), 18, 25, 0, RED)
-            self.rect = self.image.get_rect()
-            self.rect.centerx = x
-            self.rect.centery = y
-            self.last_update = pygame.time.get_ticks()
-            self.lifetime = 1000  # Display the streak for 1 second
-
-        def update(self):
-            now = pygame.time.get_ticks()
-            if now - self.last_update > self.lifetime:
-                self.kill()
-
     all_sprites = pygame.sprite.Group()
     player_bullets = pygame.sprite.Group()
     enemy_bullets = pygame.sprite.Group()
@@ -237,6 +241,7 @@ def single_player_game(screen):
         all_sprites.add(enemy)
         enemies.add(enemy)
 
+    global score
     score = 0
     enemies_killed = 0
 
@@ -251,6 +256,8 @@ def single_player_game(screen):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.shoot()
+                elif event.key in (pygame.K_q, pygame.K_q):
+                    player.use_bomb(enemies, enemy_bullets)
 
         all_sprites.update()
 
@@ -258,20 +265,19 @@ def single_player_game(screen):
         for hit in hits:
             score += 10
             enemies_killed += 1
-            player.kill_streak += 1  # Increase kill streak
-            kill_streak_display = KillStreak(hit.rect.centerx, hit.rect.centery, player.kill_streak)
-            all_sprites.add(kill_streak_display)
             explosion = Explosion(hit.rect.center)
             all_sprites.add(explosion)
             explosion_sound.play()
             enemy = Enemy()
             all_sprites.add(enemy)
             enemies.add(enemy)
+            player.enemies_killed += 1
+            if player.enemies_killed % 10 == 0:
+                player.bombs += 1
 
         hits = pygame.sprite.spritecollide(player, enemy_bullets, True)
         for hit in hits:
             player.health -= 1
-            player.kill_streak = 0  # Reset kill streak
             player_hit_sound.play()
             if player.health <= 0:
                 player_death_sound.play()
@@ -280,7 +286,7 @@ def single_player_game(screen):
 
         screen.blit(background, (0, 0))
         all_sprites.draw(screen)
-        draw_scoreboard(scoreboard_surface, score, player.health, enemies_killed, player.kill_streak)
+        draw_scoreboard(scoreboard_surface, score, player.health, enemies_killed, player.bombs)
         screen.blit(scoreboard_surface, (GAME_WIDTH, 0))
         pygame.display.flip()
 
@@ -319,6 +325,7 @@ while True:
 
     pygame.display.update()
     clock.tick(FPS)
+
 
 
 
