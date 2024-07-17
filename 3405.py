@@ -97,6 +97,50 @@ def game_over_screen(screen):
             elif event.type == pygame.KEYDOWN:
                 waiting = False
 
+
+def settings_menu(screen):
+    volume = pygame.mixer.music.get_volume()
+    slider_pos = int(volume * 300) + 100
+    dragging = False
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if 50 <= event.pos[0] <= 150 and 500 <= event.pos[1] <= 550:
+                    return "MAIN_MENU"  # 返回到主菜单状态
+                elif 100 <= event.pos[0] <= 400 and 300 <= event.pos[1] <= 320:
+                    dragging = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                dragging = False
+            elif event.type == pygame.MOUSEMOTION:
+                if dragging:
+                    slider_pos = event.pos[0]
+                    if slider_pos < 100:
+                        slider_pos = 100
+                    elif slider_pos > 400:
+                        slider_pos = 400
+                    volume = (slider_pos - 100) / 300
+                    pygame.mixer.music.set_volume(volume)
+
+        screen.fill(WHITE)
+
+        # 绘制标题和音量调节标签
+        draw_text(screen, "Settings", 48, WIDTH / 2, HEIGHT / 4, BLACK)
+        draw_text(screen, "Adjust Volume", 22, WIDTH / 2, HEIGHT / 2 - 50, BLACK)
+
+        # 绘制音量调节线和滑块
+        pygame.draw.line(screen, BLACK, (100, 310), (400, 310), 5)
+        pygame.draw.circle(screen, BLACK, (slider_pos, 310), 10)
+
+        # 绘制返回键及文本
+        pygame.draw.rect(screen, BLACK, pygame.Rect(30, 515, 100, 50))
+        draw_text(screen, "Return", 30, 50 + 50 / 2, 500 + 50 / 2, WHITE)
+
+        pygame.display.flip()
+        clock.tick(FPS)
 def single_player_game(screen):
     background = pygame.image.load("grassland.png").convert()
     background = pygame.transform.scale(background, (GAME_WIDTH, HEIGHT))
@@ -105,10 +149,10 @@ def single_player_game(screen):
         def __init__(self):
             pygame.sprite.Sprite.__init__(self)
             self.image = pygame.image.load("knight1.png").convert_alpha()
-            self.image = pygame.transform.scale(self.image, (60, 50))
-            self.rect = self.image.get_rect()
-            self.rect.centerx = GAME_WIDTH / 2
-            self.rect.bottom = HEIGHT - 10
+            self.image = pygame.transform.scale(self.image, (50, 40))  # 显示大小为 67i0x50 像素
+            self.rect = pygame.Rect(0, 0, 10, 5)  # 设置碰撞框大小为 30x20 像素
+            self.rect.centerx = GAME_WIDTH / 2  # 将碰撞框的中心x坐标设置为角色图片的中心x坐标
+            self.rect.centery = HEIGHT - 10 - 25  # 将碰撞框的中心y坐标设置为角色图片的底部减去一半的高度
             self.speedx = 0
             self.speedy = 0
             self.health = 3
@@ -297,36 +341,37 @@ def single_player_game(screen):
 
     game_over_screen(screen)
 
-game_state = MAIN_MENU
+game_state = "MAIN_MENU"
 
 while True:
-    if game_state == MAIN_MENU:
+    if game_state == "MAIN_MENU":
         main_menu(screen)
-    elif game_state == SINGLE_PLAYER:
+    elif game_state == "SINGLE_PLAYER":
         single_player_game(screen)
-    elif game_state == MULTI_PLAYER:
+    elif game_state == "MULTI_PLAYER":
         print("Multiplayer settings")
-    elif game_state == SETTINGS:
-        print("Game settings")
+    elif game_state == "SETTINGS":
+        game_state = settings_menu(screen)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if game_state == MAIN_MENU:
+            if game_state == "MAIN_MENU":
                 pos = pygame.mouse.get_pos()
                 x, y = pos
                 if WIDTH / 2 - 100 < x < WIDTH / 2 + 100:
                     if HEIGHT / 2 - 20 < y < HEIGHT / 2 + 20:
-                        game_state = SINGLE_PLAYER
+                        game_state = "SINGLE_PLAYER"
                     elif HEIGHT / 2 + 30 < y < HEIGHT / 2 + 70:
-                        game_state = MULTI_PLAYER
+                        game_state = "MULTI_PLAYER"
                     elif HEIGHT / 2 + 80 < y < HEIGHT / 2 + 120:
-                        game_state = SETTINGS
+                        game_state = "SETTINGS"
                     elif HEIGHT / 2 + 130 < y < HEIGHT / 2 + 170:
                         pygame.quit()
                         sys.exit()
+
 
     pygame.display.update()
     clock.tick(FPS)
