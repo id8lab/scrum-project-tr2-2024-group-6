@@ -46,6 +46,10 @@ red_star_image = pygame.transform.scale(red_star_image, (20, 20))
 green_star_image = pygame.image.load('green_star.png').convert_alpha()
 green_star_image = pygame.transform.scale(green_star_image, (20, 20))
 
+# Load and scale knight image
+knight_image = pygame.image.load('knight2.png').convert_alpha()
+knight_image = pygame.transform.scale(knight_image, (SCOREBOARD_WIDTH, SCOREBOARD_WIDTH))
+
 # Font for drawing text
 font_name = pygame.font.match_font('arial')
 
@@ -100,7 +104,7 @@ def single_player_game(screen):
     class Player(pygame.sprite.Sprite):
         def __init__(self):
             pygame.sprite.Sprite.__init__(self)
-            self.image = pygame.image.load("knight.png").convert_alpha()
+            self.image = pygame.image.load("knight1.png").convert_alpha()
             self.image = pygame.transform.scale(self.image, (60, 50))
             self.rect = self.image.get_rect()
             self.rect.centerx = GAME_WIDTH / 2
@@ -288,6 +292,7 @@ def single_player_game(screen):
         all_sprites.draw(screen)
         draw_scoreboard(scoreboard_surface, score, player.health, enemies_killed, player.bombs)
         screen.blit(scoreboard_surface, (GAME_WIDTH, 0))
+        screen.blit(knight_image, (GAME_WIDTH, HEIGHT - SCOREBOARD_WIDTH))
         pygame.display.flip()
 
     game_over_screen(screen)
@@ -325,7 +330,4 @@ while True:
 
     pygame.display.update()
     clock.tick(FPS)
-
-
-
 
