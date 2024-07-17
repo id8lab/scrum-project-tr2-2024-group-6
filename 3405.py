@@ -105,10 +105,10 @@ def single_player_game(screen):
         def __init__(self):
             pygame.sprite.Sprite.__init__(self)
             self.image = pygame.image.load("knight1.png").convert_alpha()
-            self.image = pygame.transform.scale(self.image, (60, 50))
-            self.rect = self.image.get_rect()
-            self.rect.centerx = GAME_WIDTH / 2
-            self.rect.bottom = HEIGHT - 10
+            self.image = pygame.transform.scale(self.image, (50, 40))  # 显示大小为 67i0x50 像素
+            self.rect = pygame.Rect(0, 0, 10, 5)  # 设置碰撞框大小为 30x20 像素
+            self.rect.centerx = GAME_WIDTH / 2  # 将碰撞框的中心x坐标设置为角色图片的中心x坐标
+            self.rect.centery = HEIGHT - 10 - 25  # 将碰撞框的中心y坐标设置为角色图片的底部减去一半的高度
             self.speedx = 0
             self.speedy = 0
             self.health = 3
