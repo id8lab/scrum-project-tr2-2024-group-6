@@ -14,6 +14,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 # Define game states
 MAIN_MENU = 0
@@ -46,6 +47,23 @@ red_star_image = pygame.transform.scale(red_star_image, (20, 20))
 green_star_image = pygame.image.load('green_star.png').convert_alpha()
 green_star_image = pygame.transform.scale(green_star_image, (20, 20))
 
+# Load and scale frame images
+frame_files = [
+    'frame_1.png', 'frame_2.png', 'frame_3.png', 'frame_4.png',
+    'frame_5.png', 'frame_6.png', 'frame_7.png', 'frame_8.png',
+    'frame_9.png', 'frame_10.png', 'frame_11.png', 'frame_12.png',
+    'frame_13.png', 'frame_14.png'
+]
+
+frames = []
+for file in frame_files:
+    img = pygame.image.load(file).convert_alpha()
+    if 'frame_8' in file or 'frame_9' in file or 'frame_10' in file or 'frame_11' in file or 'frame_12' in file or 'frame_13' in file or 'frame_14' in file:
+        img = pygame.transform.scale(img, (50, 50))  # Scale walking character to smaller size
+    else:
+        img = pygame.transform.scale(img, (WIDTH, HEIGHT))  # Scale background images to fit the screen width and height
+    frames.append(img)
+
 # Load and scale knight image
 knight_image = pygame.image.load('knight2.png').convert_alpha()
 knight_image = pygame.transform.scale(knight_image, (SCOREBOARD_WIDTH, SCOREBOARD_WIDTH))
@@ -74,14 +92,47 @@ def draw_scoreboard(surface, score, health, enemies_killed, bombs):
         surface.blit(green_star_image, (x + i * 25, y + 90))
     draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 120, GREEN)
 
-def main_menu(screen):
-    screen.fill(WHITE)
-    draw_text(screen, "Knight's Adventure", 48, WIDTH / 2, HEIGHT / 4, BLACK)
-    draw_text(screen, "Single Player", 22, WIDTH / 2, HEIGHT / 2, BLACK)
-    draw_text(screen, "Multiplayer", 22, WIDTH / 2, HEIGHT / 2 + 50, BLACK)
-    draw_text(screen, "Settings", 22, WIDTH / 2, HEIGHT / 2 + 100, BLACK)
-    draw_text(screen, "Quit", 22, WIDTH / 2, HEIGHT / 2 + 150, BLACK)
-    pygame.display.flip()
+def main_menu(screen, frames):
+    frame_count = len(frames)
+    current_frame = 0
+    last_update = pygame.time.get_ticks()
+    frame_rate = 150  # 控制动画速度
+
+    while True:
+        now = pygame.time.get_ticks()
+        if now - last_update > frame_rate:
+            last_update = now
+            current_frame = (current_frame + 1) % frame_count
+
+        screen.blit(frames[current_frame], (0, 0))
+        draw_text(screen, "Knight's Adventure", 48, WIDTH / 2, HEIGHT / 4, YELLOW)
+        draw_text(screen, "Single Player", 28, WIDTH / 2, HEIGHT / 2, YELLOW)
+        draw_text(screen, "Multiplayer", 28, WIDTH / 2, HEIGHT / 2 + 50, YELLOW)
+        draw_text(screen, "Settings", 28, WIDTH / 2, HEIGHT / 2 + 100, YELLOW)
+        draw_text(screen, "Quit", 28, WIDTH / 2, HEIGHT / 2 + 150, YELLOW)
+
+        if current_frame >= 7:  # Display walking character frames
+            screen.blit(frames[current_frame], (WIDTH / 2 + 100, HEIGHT / 2 + 150))  # Adjust position to be next to "Quit"
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                x, y = pos
+                if WIDTH / 2 - 100 < x < WIDTH / 2 + 100:
+                    if HEIGHT / 2 - 20 < y < HEIGHT / 2 + 20:
+                        return SINGLE_PLAYER
+                    elif HEIGHT / 2 + 30 < y < HEIGHT / 2 + 70:
+                        return MULTI_PLAYER
+                    elif HEIGHT / 2 + 80 < y < HEIGHT / 2 + 120:
+                        return SETTINGS
+                    elif HEIGHT / 2 + 130 < y < HEIGHT / 2 + 170:
+                        pygame.quit()
+                        sys.exit()
 
 def game_over_screen(screen):
     screen.fill(BLACK)
@@ -158,9 +209,9 @@ def single_player_game(screen):
                     global score
                     score += 10
                     self.enemies_killed += 1
-                    enemy = Enemy()
-                    all_sprites.add(enemy)
-                    enemies.add(enemy)
+                    new_enemy = Enemy()
+                    all_sprites.add(new_enemy)
+                    enemies.add(new_enemy)
                 for bullet in enemy_bullets:
                     bullet.kill()
 
@@ -301,7 +352,7 @@ game_state = MAIN_MENU
 
 while True:
     if game_state == MAIN_MENU:
-        main_menu(screen)
+        game_state = main_menu(screen, frames)
     elif game_state == SINGLE_PLAYER:
         single_player_game(screen)
     elif game_state == MULTI_PLAYER:
@@ -309,25 +360,5 @@ while True:
     elif game_state == SETTINGS:
         print("Game settings")
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if game_state == MAIN_MENU:
-                pos = pygame.mouse.get_pos()
-                x, y = pos
-                if WIDTH / 2 - 100 < x < WIDTH / 2 + 100:
-                    if HEIGHT / 2 - 20 < y < HEIGHT / 2 + 20:
-                        game_state = SINGLE_PLAYER
-                    elif HEIGHT / 2 + 30 < y < HEIGHT / 2 + 70:
-                        game_state = MULTI_PLAYER
-                    elif HEIGHT / 2 + 80 < y < HEIGHT / 2 + 120:
-                        game_state = SETTINGS
-                    elif HEIGHT / 2 + 130 < y < HEIGHT / 2 + 170:
-                        pygame.quit()
-                        sys.exit()
-
     pygame.display.update()
     clock.tick(FPS)
-
