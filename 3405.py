@@ -50,6 +50,13 @@ frame_files = [
     'frame_13.png', 'frame_14.png'
 ]
 
+difficulty_settings = {
+    "Easy": {"enemy_count": 5, "game_speed": 1},
+    "Medium": {"enemy_count": 10, "game_speed": 1.5},
+    "Hard": {"enemy_count": 15, "game_speed": 2}
+}
+selected_difficulty = "Medium"
+
 frames = []
 for file in frame_files:
     img = pygame.image.load(file).convert_alpha()
@@ -121,12 +128,18 @@ def show_high_scores(screen):
                 waiting = False
 
 def settings_menu(screen):
+    global selected_difficulty
     slider_rect = pygame.Rect(100, HEIGHT // 2, WIDTH - 200, 10)
     slider_knob_rect = pygame.Rect(slider_rect.x, slider_rect.y - 10, 20, 30)
     dragging = False
     volume = pygame.mixer.music.get_volume()
 
-    # Define return button
+    difficulty_buttons = {
+        "Easy": pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 100, 130, 60),
+        "Medium": pygame.Rect(WIDTH // 2 - 50, HEIGHT // 2 + 100, 130, 60),
+        "Hard": pygame.Rect(WIDTH // 2 + 50, HEIGHT // 2 + 100, 130, 60)
+    }
+
     return_button_rect = pygame.Rect(10, HEIGHT - 100, 85, 70)
 
     while True:
@@ -138,29 +151,39 @@ def settings_menu(screen):
                 if slider_knob_rect.collidepoint(event.pos):
                     dragging = True
                 elif return_button_rect.collidepoint(event.pos):
-                    return  # Return to the main menu
+                    return
+                for difficulty, rect in difficulty_buttons.items():
+                    if rect.collidepoint(event.pos):
+                        selected_difficulty = difficulty
             elif event.type == pygame.MOUSEBUTTONUP:
                 dragging = False
             elif event.type == pygame.MOUSEMOTION:
                 if dragging:
-                    slider_knob_rect.x = max(slider_rect.x, min(event.pos[0], slider_rect.x + slider_rect.width - slider_knob_rect.width))
+                    slider_knob_rect.x = max(slider_rect.x, min(event.pos[0],
+                                                                slider_rect.x + slider_rect.width - slider_knob_rect.width))
                     volume = (slider_knob_rect.x - slider_rect.x) / (slider_rect.width - slider_knob_rect.width)
                     pygame.mixer.music.set_volume(volume)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN or event.key == pygame.K_ESCAPE:
-                    return  # Return to the main menu
+                    return
 
         screen.fill(WHITE)
-        draw_text(screen, "Settings", 48, WIDTH // 2, HEIGHT // 4, BLACK)
-        draw_text(screen, "Adjust Volume", 28, WIDTH // 2, HEIGHT // 2 - 40, BLACK)
+        draw_text(screen, "Settings", 48, WIDTH // 2, HEIGHT // 4 - 50, BLACK)
+        draw_text(screen, "Adjust Volume", 28, WIDTH // 2, HEIGHT // 2 - 60, BLACK)
         pygame.draw.rect(screen, BLACK, slider_rect)
         pygame.draw.ellipse(screen, BLACK, slider_knob_rect)
-        # Draw return button
+
+        draw_text(screen, "Current Difficulty: " + selected_difficulty, 28, WIDTH // 2, HEIGHT // 2 + 50, BLACK)
+
+        for difficulty, rect in difficulty_buttons.items():
+            pygame.draw.rect(screen, BLACK, rect)
+            draw_text(screen, difficulty, 28, rect.centerx, rect.centery, WHITE)
+
         pygame.draw.rect(screen, BLACK, return_button_rect)
         draw_text(screen, "Return", 20, return_button_rect.centerx, return_button_rect.centery, WHITE)
+
         pygame.display.flip()
         clock.tick(FPS)
-
 
 def main_menu(screen, frames):
     frame_count = len(frames)
@@ -209,8 +232,42 @@ def main_menu(screen, frames):
 
 
 def game_over_screen(screen, score):
-    update_high_scores(score)
+    # Fill the screen with black background
     screen.fill(BLACK)
+
+    # Draw GAME OVER text
+    draw_text(screen, "GAME OVER", 80, WIDTH / 2, HEIGHT / 8, RED)
+
+    # Draw score text
+    draw_text(screen, f"Your Score: {score}", 22, WIDTH / 2, HEIGHT / 3, WHITE)
+
+    # Draw "View High Scores" box
+    box_width, box_height = 200, 50
+    box_x = WIDTH / 2 - box_width / 2
+    box_y = HEIGHT / 2 + 20
+    pygame.draw.rect(screen, YELLOW, (box_x, box_y, box_width, box_height))
+    draw_text(screen, "View High Scores", 22, WIDTH / 2, box_y + box_height / 2, BLACK)
+
+    # Draw "Press any key to restart" text
+    draw_text(screen, "Press any key to Restart the game", 22, WIDTH / 2, HEIGHT * 5 / 6, WHITE)
+
+    pygame.display.flip()
+
+    # Wait for player input
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key != pygame.K_c:  # Any key except 'C'
+                    waiting = False
+                    return SINGLE_PLAYER
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if box_x < x < box_x + box_width and box_y < y < box_y + box_height:
+                    return HIGH_SCORES
 
     # Define positions
     game_over_y = HEIGHT / 8
@@ -252,8 +309,8 @@ def game_over_screen(screen, score):
 
 
 def single_player_game(screen):
-    background = pygame.image.load("grassland.png").convert()
-    background = pygame.transform.scale(background, (GAME_WIDTH, HEIGHT))
+    background = pygame.image.load("background.png").convert()
+    background = pygame.transform.scale(background, (GAME_WIDTH, 1000))
 
     class Player(pygame.sprite.Sprite):
         def __init__(self):
@@ -268,6 +325,8 @@ def single_player_game(screen):
             self.health = 3
             self.bombs = 3
             self.enemies_killed = 0
+            self.invincible = False
+            self.invincible_timer = 0
 
         def update(self):
             self.speedx = 0
@@ -295,6 +354,18 @@ def single_player_game(screen):
             if self.rect.top < 0:
                 self.rect.top = 0
 
+            if self.invincible:
+                now = pygame.time.get_ticks()
+                if now - self.invincible_timer > 2000:
+                    self.invincible = False
+                    self.image.set_alpha(255)  # 重置透明度
+                else:
+                    if (now - self.invincible_timer) % 500 < 250:
+                        self.image.set_alpha(128)
+                    else:
+                        self.image.set_alpha(255)
+                print("Invincible:", self.invincible, "Time left:", 2000 - (now - self.invincible_timer))
+
         def shoot(self):
             bullet = Bullet(self.rect.centerx, self.rect.top, -10, "player")
             all_sprites.add(bullet)
@@ -317,6 +388,16 @@ def single_player_game(screen):
                     enemies.add(new_enemy)
                 for bullet in enemy_bullets:
                     bullet.kill()
+
+        def hit(self):
+            if not self.invincible:
+                self.health -= 1
+                if self.health <= 0:
+                    self.kill()
+                else:
+                    self.invincible = True
+                    self.invincible_timer = pygame.time.get_ticks()
+                player_hit_sound.play()
 
     class Enemy(pygame.sprite.Sprite):
         def __init__(self):
@@ -350,9 +431,9 @@ def single_player_game(screen):
             pygame.sprite.Sprite.__init__(self)
             if bullet_type == "player":
                 self.image = pygame.image.load('player bullets.png').convert_alpha()
-            else:
+            else:  # bullet_type == "enemy"
                 self.image = pygame.image.load('enemy bullets.png').convert_alpha()
-            self.image = pygame.transform.scale(self.image, (20, 40))
+            self.image = pygame.transform.scale(self.image, (20, 40))  # 调整图片大小以适应子弹
             self.rect = self.image.get_rect()
             self.rect.bottom = y
             self.rect.centerx = x
@@ -372,7 +453,7 @@ def single_player_game(screen):
             self.rect.center = center
             self.frame = 0
             self.last_update = pygame.time.get_ticks()
-            self.frame_rate = 50
+            self.frame_rate = 50  # 控制动画速度
 
         def update(self):
             now = pygame.time.get_ticks()
@@ -394,7 +475,8 @@ def single_player_game(screen):
     player = Player()
     all_sprites.add(player)
 
-    for i in range(8):
+    difficulty = difficulty_settings[selected_difficulty]
+    for i in range(difficulty["enemy_count"]):
         enemy = Enemy()
         all_sprites.add(enemy)
         enemies.add(enemy)
@@ -404,6 +486,9 @@ def single_player_game(screen):
     enemies_killed = 0
 
     scoreboard_surface = pygame.Surface((SCOREBOARD_WIDTH, HEIGHT))
+
+    background_y = 0
+    background_speed = 2
 
     running = True
     while running:
@@ -435,14 +520,19 @@ def single_player_game(screen):
 
         hits = pygame.sprite.spritecollide(player, enemy_bullets, True)
         for hit in hits:
-            player.health -= 1
-            player_hit_sound.play()
+            player.hit()
             if player.health <= 0:
                 player_death_sound.play()
-                pygame.time.wait(1000)
+                pygame.time.wait(1000)  # Wait for a second to allow death sound to play
                 running = False
 
-        screen.blit(background, (0, 0))
+        background_y += background_speed
+        if background_y >= HEIGHT:
+            background_y = 0
+
+        screen.blit(background, (0, background_y - HEIGHT))
+        screen.blit(background, (0, background_y))
+
         all_sprites.draw(screen)
         draw_scoreboard(scoreboard_surface, score, player.health, enemies_killed, player.bombs)
         screen.blit(scoreboard_surface, (GAME_WIDTH, 0))
@@ -450,6 +540,7 @@ def single_player_game(screen):
         pygame.display.flip()
 
     return game_over_screen(screen, score)
+
 
 
 game_state = MAIN_MENU
@@ -467,12 +558,6 @@ while True:
     elif game_state == HIGH_SCORES:
         show_high_scores(screen)
         game_state = MAIN_MENU
-
-    pygame.display.update()
-    clock.tick(FPS)
-
-
-
 
     pygame.display.update()
     clock.tick(FPS)
