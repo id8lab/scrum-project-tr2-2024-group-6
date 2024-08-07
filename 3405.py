@@ -78,11 +78,17 @@ def draw_text(surface, text, size, x, y, color):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
+
 def draw_scoreboard(surface, score, health, enemies_killed, bombs):
     surface.fill(BLACK)
     x = SCOREBOARD_WIDTH / 2
     y = 50
-    draw_text(surface, f'HiScore: {score}', 18, x, y, WHITE)
+
+    # 读取最高分
+    high_scores = get_high_scores()
+    hiscore = high_scores[0] if high_scores else 0
+
+    draw_text(surface, f'Highest score: {hiscore}', 18, x, y, WHITE)
     draw_text(surface, f'Score: {score}', 18, x, y + 30, WHITE)
     draw_text(surface, f'Player:', 18, x - 20, y + 60, RED)
     for i in range(health):
@@ -91,6 +97,7 @@ def draw_scoreboard(surface, score, health, enemies_killed, bombs):
     for i in range(bombs):
         surface.blit(green_star_image, (x + i * 25, y + 90))
     draw_text(surface, f'Enemies Killed: {enemies_killed}', 18, x, y + 120, GREEN)
+
 
 def get_high_scores():
     try:
@@ -232,28 +239,31 @@ def main_menu(screen, frames):
 
 
 def game_over_screen(screen, score):
-    # Fill the screen with black background
+    # 更新最高分
+    update_high_scores(score)
+
+    # 填充屏幕黑色背景
     screen.fill(BLACK)
 
-    # Draw GAME OVER text
+    # 绘制 GAME OVER 文本
     draw_text(screen, "GAME OVER", 80, WIDTH / 2, HEIGHT / 8, RED)
 
-    # Draw score text
+    # 绘制分数文本
     draw_text(screen, f"Your Score: {score}", 22, WIDTH / 2, HEIGHT / 3, WHITE)
 
-    # Draw "View High Scores" box
+    # 绘制“查看最高分”框
     box_width, box_height = 200, 50
     box_x = WIDTH / 2 - box_width / 2
     box_y = HEIGHT / 2 + 20
     pygame.draw.rect(screen, YELLOW, (box_x, box_y, box_width, box_height))
     draw_text(screen, "View High Scores", 22, WIDTH / 2, box_y + box_height / 2, BLACK)
 
-    # Draw "Press any key to restart" text
+    # 绘制“按任意键重新开始”文本
     draw_text(screen, "Press any key to Restart the game", 22, WIDTH / 2, HEIGHT * 5 / 6, WHITE)
 
     pygame.display.flip()
 
-    # Wait for player input
+    # 等待玩家输入
     waiting = True
     while waiting:
         for event in pygame.event.get():
@@ -261,44 +271,7 @@ def game_over_screen(screen, score):
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key != pygame.K_c:  # Any key except 'C'
-                    waiting = False
-                    return SINGLE_PLAYER
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                if box_x < x < box_x + box_width and box_y < y < box_y + box_height:
-                    return HIGH_SCORES
-
-    # Define positions
-    game_over_y = HEIGHT / 8
-    score_y = HEIGHT / 3
-    high_scores_y = HEIGHT / 2
-    play_again_y = HEIGHT * 5 / 6
-
-    # Draw game over text and score
-    draw_text(screen, "GAME OVER", 80, WIDTH / 2, game_over_y, RED)
-    draw_text(screen, f"Your Score: {score}", 22, WIDTH / 2, score_y, WHITE)
-
-    # Draw "High Scores" box
-    box_width, box_height = 200, 50
-    box_x = WIDTH / 2 - box_width / 2
-    box_y = high_scores_y + 20
-    pygame.draw.rect(screen, YELLOW, (box_x, box_y, box_width, box_height))
-    draw_text(screen, "View High Scores", 22, WIDTH / 2, box_y + box_height / 2, BLACK)
-
-    # Draw "Play Again" text
-    draw_text(screen, "Press any key to Restart the game", 22, WIDTH / 2, play_again_y, WHITE)
-
-    pygame.display.flip()
-
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key != pygame.K_c:  # Any key except 'C'
+                if event.key != pygame.K_c:  # 任何键除 'C' 外
                     waiting = False
                     return SINGLE_PLAYER
             elif event.type == pygame.MOUSEBUTTONDOWN:
